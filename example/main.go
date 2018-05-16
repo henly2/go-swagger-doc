@@ -3,7 +3,7 @@ package main
 import(
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"github.com/qjw/go-swagger-doc"
+	"github.com/henly2/go-swagger-doc"
 	"fmt"
 	"github.com/gin-contrib/cors"
 )
