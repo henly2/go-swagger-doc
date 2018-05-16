@@ -12,6 +12,7 @@ import (
 
 type DocLoader func(key string) ([]byte, error)
 
+type GroupSwaggerData map[string]SwaggerEntry
 type options struct {
 	// 是否调试模式
 	debugFlag bool
@@ -21,6 +22,8 @@ type options struct {
 	baseUrl string
 	// 文件和里面内容的缓存
 	swaggerData map[string]SwaggerEntry
+	// 文件和里面内容的缓存--增加分组功能
+	swaggerDataMap map[string]GroupSwaggerData
 	// 文档对象缓存
 	docData map[string]*SwaggerDocFile
 	// 当不从文件中加载doc时，获取swagger数据的loader
@@ -33,6 +36,7 @@ func newOptions(config *Config) *options {
 		docPath:     config.DocFilePath,
 		baseUrl:     config.BasePath,
 		swaggerData: make(map[string]SwaggerEntry),
+		swaggerDataMap: make(map[string]GroupSwaggerData),
 		docData:     make(map[string]*SwaggerDocFile),
 	}
 	// 非调试模式，不允许从外部加载doc文件
@@ -104,6 +108,11 @@ func Swagger2(group *gin.RouterGroup, path string, method string, extra *StructP
 	swaggerFinish(path, method, NewSwaggerMethodEntry(extra))
 }
 
+func Swagger3(group *gin.RouterGroup, apiGroup string, path string, method string, extra *StructParam) {
+	path = realPath(group, path)
+	swaggerFinish3(apiGroup, path, method, NewSwaggerMethodEntry(extra))
+}
+
 func Swagger(group *gin.RouterGroup, path string, method string, entry string) {
 	path = realPath(group, path)
 	// 解析文件路径和内部路径
@@ -160,6 +169,32 @@ func swaggerFinish(path string, method string, entry *SwaggerMethodEntry) {
 	}
 	sentry.SetMethod(method, *entry)
 	gOption.swaggerData[path] = sentry
+}
+
+func swaggerFinish3(apiGroup string, path string, method string, entry *SwaggerMethodEntry) {
+	if err := binding.Validate(entry); err != nil {
+		panic(err)
+		return
+	}
+
+	var sentry SwaggerEntry
+	var groupData GroupSwaggerData
+	if v, ok := gOption.swaggerDataMap[apiGroup]; ok {
+		groupData = v
+	} else {
+		groupData = make(GroupSwaggerData)
+	}
+
+	if v, ok := groupData[path]; ok {
+		sentry = v
+	} else {
+		sentry = SwaggerEntry{}
+	}
+
+	sentry.SetMethod(method, *entry)
+
+	groupData[path] = sentry
+	gOption.swaggerDataMap[apiGroup] = groupData
 }
 
 //func GetFlags(baseUrl string) []cli.Flag {

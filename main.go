@@ -4,6 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"net/url"
+	"fmt"
+	"strings"
 )
 
 type Config struct {
@@ -41,10 +43,10 @@ func (this *Config) initDefault() {
 		this.Title = "Swagger文档"
 	}
 	if len(this.Description) == 0 {
-		this.Title = "Swagger文档描述"
+		this.Description = "Swagger文档描述"
 	}
 	if len(this.DocVersion) == 0 {
-		this.Title = "0.0.1"
+		this.DocVersion = "0.0.1"
 	}
 	if len(this.SwaggerUiUrl) == 0 {
 		// http://swagger.qiujinwu.com
@@ -68,9 +70,18 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 	gOption = newOptions(config)
 	gOption.docLoader = docLoader
 
-	grouter.GET("/"+config.SwaggerUrlPrefix+"/spec", func(c *gin.Context) {
+	grouter.GET("/"+config.SwaggerUrlPrefix+"/spec/*group", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
+
+		apiGroupName := c.Param("group")
+		apiGroupName = strings.TrimLeft(apiGroupName, "/")
+		apiGroupName = strings.TrimRight(apiGroupName, "/")
+		fmt.Println(apiGroupName)
+
 		swaggerData1 := gOption.swaggerData
+		if v, ok := gOption.swaggerDataMap[apiGroupName]; ok {
+			swaggerData1 = v
+		}
 
 		headersDef := make(map[string]SecurityDefinition)
 		if len(config.Headers) > 0 {
