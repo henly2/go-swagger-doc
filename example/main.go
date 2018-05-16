@@ -9,13 +9,13 @@ import(
 )
 
 type SayHelloParam struct {
-	From   		string `json:"from"`
-	Content  	string `json:"content"`
+	From   		string `json:"from" doc:"谁发送的"`
+	Content  	string `json:"content" doc:"发送的内容"`
 }
 
 type SayHelloResponse struct {
-	Err   	 int `json:"err"`
-	Content  string `json:"content"`
+	Err   	 int `json:"err" doc:"错误代码"`
+	Content  string `json:"content" doc:"内容"`
 }
 
 func DocLoader(key string) ([]byte, error){
