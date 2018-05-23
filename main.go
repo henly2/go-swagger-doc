@@ -58,7 +58,7 @@ func (this *Config) initDefault() {
 }
 
 func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoader) {
-	if gOption != nil {
+	if gDefaultOption != nil {
 		panic("swagger inited yet")
 		return
 	}
@@ -67,8 +67,8 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 		panic("invalid swagger parameter")
 	}
 	config.initDefault()
-	gOption = newOptions(config)
-	gOption.docLoader = docLoader
+	gDefaultOption = newOptions(config)
+	gDefaultOption.docLoader = docLoader
 
 	grouter.GET("/"+config.SwaggerUrlPrefix+"/spec/*group", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
@@ -78,8 +78,8 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 		apiGroupName = strings.TrimRight(apiGroupName, "/")
 		fmt.Println(apiGroupName)
 
-		swaggerData1 := gOption.swaggerData
-		if v, ok := gOption.swaggerDataMap[apiGroupName]; ok {
+		swaggerData1 := gDefaultOption.swaggerData
+		if v, ok := gDefaultOption.swaggerDataMap[apiGroupName]; ok {
 			swaggerData1 = v
 		}
 
@@ -122,3 +122,86 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 		c.Redirect(http.StatusFound, host)
 	})
 }
+
+func AddGroupOption(groupName string, config *Config, docLoader DocLoader) {
+	//if gOption != nil {
+	//	panic("swagger inited yet")
+	//	return
+	//}
+
+	if config == nil || docLoader == nil {
+		panic("invalid swagger parameter")
+	}
+	config.initDefault()
+	option := newOptions(config)
+	option.docLoader = docLoader
+
+	gGroupOptions[groupName] = option
+}
+
+func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
+	grouter.GET("/" + urlPrefix + "/spec/*group", func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+
+		apiGroupName := c.Param("group")
+		apiGroupName = strings.TrimLeft(apiGroupName, "/")
+		apiGroupName = strings.TrimRight(apiGroupName, "/")
+		fmt.Println(apiGroupName)
+
+		var (
+			option *options
+			exist bool
+		)
+		option, exist = gGroupOptions[apiGroupName]
+		if !exist {
+			c.JSON(http.StatusOK, struct {
+				ErrMsg string `json:"errmsg"`
+			}{ErrMsg: fmt.Sprintf("Not find group option %s", apiGroupName)})
+			return
+		}
+
+		swaggerData1 := option.swaggerData
+		if v, ok := option.swaggerDataMap[apiGroupName]; ok {
+			swaggerData1 = v
+		}
+
+		headersDef := make(map[string]SecurityDefinition)
+		if len(option.config.Headers) > 0 {
+			for _, v := range option.config.Headers {
+				key := v.Type
+				v.In = "query"
+				v.Type = "basic"
+				headersDef[key] = v
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"basePath": option.config.BasePath,
+			"swagger":  swaggerVersion,
+			"info": struct {
+				Description string `json:"description"`
+				Title       string `json:"title"`
+				Version     string `json:"version"`
+			}{
+				Description: option.config.Description,
+				Title:       option.config.Title,
+				Version:     option.config.DocVersion,
+			},
+			"definition":          struct{}{},
+			"paths":               swaggerData1,
+			"securityDefinitions": headersDef,
+		})
+
+	})
+
+	grouter.GET("/"+urlPrefix, func(c *gin.Context) {
+		scheme := "http://"
+		if c.Request.TLS != nil {
+			scheme = "https://"
+		}
+		host := scheme + c.Request.Host + "/" + urlPrefix + "/spec"
+		host = urlPrefix + "?url=" + url.QueryEscape(host)
+		c.Redirect(http.StatusFound, host)
+	})
+}
+

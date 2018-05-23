@@ -99,6 +99,7 @@ func NewSwaggerMethodEntry(param *StructParam) *SwaggerMethodEntry {
 	obj := JsonSchemaObj{}
 	obj.ParseObject(param.ResponseData)
 	parameter := &JsonSchemaObj{
+		Description: "success response",
 		Schema:&obj,
 	}
 	resp := make(map[int]*JsonSchemaObj)

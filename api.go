@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+	"fmt"
 )
 
 type DocLoader func(key string) ([]byte, error)
@@ -28,6 +29,8 @@ type options struct {
 	docData map[string]*SwaggerDocFile
 	// 当不从文件中加载doc时，获取swagger数据的loader
 	docLoader DocLoader
+	// 当前的配置
+	config *Config
 }
 
 func newOptions(config *Config) *options {
@@ -38,6 +41,7 @@ func newOptions(config *Config) *options {
 		swaggerData: make(map[string]SwaggerEntry),
 		swaggerDataMap: make(map[string]GroupSwaggerData),
 		docData:     make(map[string]*SwaggerDocFile),
+		config: config,
 	}
 	// 非调试模式，不允许从外部加载doc文件
 	if !opt.debugFlag {
@@ -58,8 +62,13 @@ func newOptions(config *Config) *options {
 	return opt
 }
 
+// 使用分组的option
+//var (
+//	gOption *options = nil
+//)
 var (
-	gOption *options = nil
+	gDefaultOption *options = nil
+	gGroupOptions = make(map[string]*options)
 )
 
 func swaggerImp(docFile *SwaggerDocFile, path string, method string, entry string) {
@@ -92,8 +101,30 @@ func parseFileNode(entry string) (filepath string, node string, err error) {
 
 func realPath(group *gin.RouterGroup, path string) string {
 	var burl = group.BasePath()
-	if len(gOption.baseUrl) > 0 && strings.HasPrefix(burl, gOption.baseUrl) {
-		burl = strings.TrimPrefix(burl, gOption.baseUrl)
+	if len(gDefaultOption.baseUrl) > 0 && strings.HasPrefix(burl, gDefaultOption.baseUrl) {
+		burl = strings.TrimPrefix(burl, gDefaultOption.baseUrl)
+	}
+	if strings.HasPrefix(path, "/") {
+		path = burl + path
+	} else {
+		path = burl + "/" + path
+	}
+	return path
+}
+
+func realPathByGroup(group *gin.RouterGroup, apiGroup, path string) string {
+	var (
+		option *options
+		exist bool
+	)
+	option, exist = gGroupOptions[apiGroup]
+	if !exist {
+		panic(fmt.Errorf("Not find group option %s", apiGroup))
+	}
+
+	var burl = group.BasePath()
+	if len(option.baseUrl) > 0 && strings.HasPrefix(burl, option.baseUrl) {
+		burl = strings.TrimPrefix(burl, option.baseUrl)
 	}
 	if strings.HasPrefix(path, "/") {
 		path = burl + path
@@ -108,9 +139,9 @@ func Swagger2(group *gin.RouterGroup, path string, method string, extra *StructP
 	swaggerFinish(path, method, NewSwaggerMethodEntry(extra))
 }
 
-func Swagger3(group *gin.RouterGroup, apiGroup string, path string, method string, extra *StructParam) {
-	path = realPath(group, path)
-	swaggerFinish3(apiGroup, path, method, NewSwaggerMethodEntry(extra))
+func Swagger2ByGroup(group *gin.RouterGroup, apiGroup string, path string, method string, extra *StructParam) {
+	path = realPathByGroup(group, apiGroup, path)
+	swaggerFinishByGroup(apiGroup, path, method, NewSwaggerMethodEntry(extra))
 }
 
 func Swagger(group *gin.RouterGroup, path string, method string, entry string) {
@@ -123,14 +154,14 @@ func Swagger(group *gin.RouterGroup, path string, method string, entry string) {
 	}
 
 	// 是否有缓存
-	if docFile, ok := gOption.docData[rfilepath]; ok {
+	if docFile, ok := gDefaultOption.docData[rfilepath]; ok {
 		swaggerImp(docFile, path, method, node)
 		return
 	}
 
 	var yamlFile []byte
-	if len(gOption.docPath) > 0 {
-		rfilepath = gOption.docPath + rfilepath
+	if len(gDefaultOption.docPath) > 0 {
+		rfilepath = gDefaultOption.docPath + rfilepath
 
 		// 加载文件
 		yamlFile, err = ioutil.ReadFile(rfilepath)
@@ -138,7 +169,7 @@ func Swagger(group *gin.RouterGroup, path string, method string, entry string) {
 			panic(err)
 		}
 	} else {
-		yamlFile, err = gOption.docLoader(rfilepath)
+		yamlFile, err = gDefaultOption.docLoader(rfilepath)
 		if err != nil {
 			panic(err)
 		}
@@ -151,7 +182,7 @@ func Swagger(group *gin.RouterGroup, path string, method string, entry string) {
 	}
 
 	// 写入缓存
-	gOption.docData[rfilepath] = &docFile
+	gDefaultOption.docData[rfilepath] = &docFile
 	swaggerImp(&docFile, path, method, node)
 }
 
@@ -162,24 +193,33 @@ func swaggerFinish(path string, method string, entry *SwaggerMethodEntry) {
 	}
 
 	var sentry SwaggerEntry
-	if v, ok := gOption.swaggerData[path]; ok {
+	if v, ok := gDefaultOption.swaggerData[path]; ok {
 		sentry = v
 	} else {
 		sentry = SwaggerEntry{}
 	}
 	sentry.SetMethod(method, *entry)
-	gOption.swaggerData[path] = sentry
+	gDefaultOption.swaggerData[path] = sentry
 }
 
-func swaggerFinish3(apiGroup string, path string, method string, entry *SwaggerMethodEntry) {
+func swaggerFinishByGroup(apiGroup string, path string, method string, entry *SwaggerMethodEntry) {
 	if err := binding.Validate(entry); err != nil {
 		panic(err)
 		return
 	}
 
+	var (
+		option *options
+		exist bool
+	)
+	option, exist = gGroupOptions[apiGroup]
+	if !exist {
+		panic(fmt.Errorf("Not find group option %s", apiGroup))
+	}
+
 	var sentry SwaggerEntry
 	var groupData GroupSwaggerData
-	if v, ok := gOption.swaggerDataMap[apiGroup]; ok {
+	if v, ok := option.swaggerDataMap[apiGroup]; ok {
 		groupData = v
 	} else {
 		groupData = make(GroupSwaggerData)
@@ -194,7 +234,7 @@ func swaggerFinish3(apiGroup string, path string, method string, entry *SwaggerM
 	sentry.SetMethod(method, *entry)
 
 	groupData[path] = sentry
-	gOption.swaggerDataMap[apiGroup] = groupData
+	option.swaggerDataMap[apiGroup] = groupData
 }
 
 //func GetFlags(baseUrl string) []cli.Flag {
