@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"fmt"
 	"strings"
+	"encoding/json"
 )
 
 type Config struct {
@@ -40,10 +41,10 @@ type Config struct {
 
 func (this *Config) initDefault() {
 	if len(this.Title) == 0 {
-		this.Title = "Swagger文档"
+		this.Title = "Swagger document"
 	}
 	if len(this.Description) == 0 {
-		this.Description = "Swagger文档描述"
+		this.Description = "Swagger document description"
 	}
 	if len(this.DocVersion) == 0 {
 		this.DocVersion = "0.0.1"
@@ -72,11 +73,14 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 
 	grouter.GET("/"+config.SwaggerUrlPrefix+"/spec/*group", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
+		lang := c.GetHeader("Accept-Language")
+		if lang == "" {
+			lang = c.Param("lang")
+		}
 
 		apiGroupName := c.Param("group")
 		apiGroupName = strings.TrimLeft(apiGroupName, "/")
 		apiGroupName = strings.TrimRight(apiGroupName, "/")
-		fmt.Println(apiGroupName)
 
 		swaggerData1 := gDefaultOption.swaggerData
 		if v, ok := gDefaultOption.swaggerDataMap[apiGroupName]; ok {
@@ -93,7 +97,7 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 			}
 		}
 
-		c.JSON(http.StatusOK, gin.H{
+		response := gin.H{
 			"basePath": config.BasePath,
 			"swagger":  swaggerVersion,
 			"info": struct {
@@ -108,7 +112,13 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 			"definition":          struct{}{},
 			"paths":               swaggerData1,
 			"securityDefinitions": headersDef,
-		})
+		}
+
+		//c.JSON(http.StatusOK, response)
+
+		data, _ := json.Marshal(response)
+		text := TranslateText(string(data), lang)
+		c.String(http.StatusOK, "%s", text)
 
 	})
 
@@ -143,10 +153,14 @@ func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 	grouter.GET("/" + urlPrefix + "/spec/*group", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
 
+		lang := c.Request.FormValue("lang")
+		if lang == "" {
+			lang = "en-us"
+		}
+
 		apiGroupName := c.Param("group")
 		apiGroupName = strings.TrimLeft(apiGroupName, "/")
 		apiGroupName = strings.TrimRight(apiGroupName, "/")
-		fmt.Println(apiGroupName)
 
 		var (
 			option *options
@@ -175,7 +189,7 @@ func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 			}
 		}
 
-		c.JSON(http.StatusOK, gin.H{
+		response := gin.H{
 			"basePath": option.config.BasePath,
 			"swagger":  swaggerVersion,
 			"info": struct {
@@ -190,7 +204,13 @@ func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 			"definition":          struct{}{},
 			"paths":               swaggerData1,
 			"securityDefinitions": headersDef,
-		})
+		}
+
+		//c.JSON(http.StatusOK, response)
+
+		data, _ := json.Marshal(response)
+		text := TranslateText(string(data), lang)
+		c.String(http.StatusOK, "%s", text)
 
 	})
 

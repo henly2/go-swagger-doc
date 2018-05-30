@@ -118,7 +118,7 @@ func NewSwaggerMethodEntry(param *StructParam) *SwaggerMethodEntry {
 		obj := JsonSchemaObj{}
 		obj.ParseObject(param.JsonData)
 		parameter := &SwaggerMethodParameter{
-			Description: "Json参数",
+			Description: "Json",
 			In:          "body",
 			Name:        "body",
 			Required:    true,
