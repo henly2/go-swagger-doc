@@ -154,6 +154,7 @@ func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 		c.Header("Access-Control-Allow-Origin", "*")
 
 		lang := c.Request.FormValue("lang")
+		lang = strings.ToLower(lang)
 		if lang == "" {
 			lang = "en-us"
 		}
