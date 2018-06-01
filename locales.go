@@ -19,6 +19,8 @@ func SetLocalesDir(dir string)  {
 
 	localesDir = dir
 	langTemplateData = make(map[string]map[string]string)
+
+	loadLocale("en-us")
 }
 
 func loadLocale(lang string) error {
@@ -42,7 +44,7 @@ func TranslateText(text, lang string) string {
 
 	templateData, ok := langTemplateData[lang]
 	if !ok {
-		if err := loadLocale(lang); err != nil {
+		if err := loadLocale(lang); err == nil {
 			templateData = langTemplateData[lang]
 		} else {
 			templateData = langTemplateData["en-us"]
