@@ -98,6 +98,7 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 		}
 
 		response := gin.H{
+			"host": c.Request.Host,
 			"basePath": config.BasePath,
 			"swagger":  swaggerVersion,
 			"info": struct {
@@ -191,6 +192,7 @@ func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 		}
 
 		response := gin.H{
+			"host": c.Request.Host,
 			"basePath": option.config.BasePath,
 			"swagger":  swaggerVersion,
 			"info": struct {

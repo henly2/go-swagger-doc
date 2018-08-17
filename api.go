@@ -102,7 +102,7 @@ func parseFileNode(entry string) (filepath string, node string, err error) {
 func realPath(group *gin.RouterGroup, path string) string {
 	var burl = group.BasePath()
 	if len(gDefaultOption.baseUrl) > 0 && strings.HasPrefix(burl, gDefaultOption.baseUrl) {
-		burl = strings.TrimPrefix(burl, gDefaultOption.baseUrl)
+		//burl = strings.TrimPrefix(burl, gDefaultOption.baseUrl)
 	}
 	if strings.HasPrefix(path, "/") {
 		path = burl + path
@@ -124,13 +124,15 @@ func realPathByGroup(group *gin.RouterGroup, apiGroup, path string) string {
 
 	var burl = group.BasePath()
 	if len(option.baseUrl) > 0 && strings.HasPrefix(burl, option.baseUrl) {
-		burl = strings.TrimPrefix(burl, option.baseUrl)
+		//burl = strings.TrimPrefix(burl, option.baseUrl)
 	}
+
 	if strings.HasPrefix(path, "/") {
 		path = burl + path
 	} else {
 		path = burl + "/" + path
 	}
+
 	return path
 }
 
