@@ -109,7 +109,7 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 				Title:       config.Title,
 				Version:     config.DocVersion,
 			},
-			"definition":          struct{}{},
+			//"definition":          struct{}{},
 			"paths":               swaggerData1,
 			"securityDefinitions": headersDef,
 		}
@@ -202,7 +202,7 @@ func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 				Title:       option.config.Title,
 				Version:     option.config.DocVersion,
 			},
-			"definition":          struct{}{},
+			//"definition":          struct{}{},
 			"paths":               swaggerData1,
 			"securityDefinitions": headersDef,
 		}

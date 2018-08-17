@@ -188,8 +188,8 @@ func Swagger(group *gin.RouterGroup, path string, method string, entry string) {
 
 func swaggerFinish(path string, method string, entry *SwaggerMethodEntry) {
 	if err := binding.Validate(entry); err != nil {
-		panic(err)
-		return
+		//panic(err)
+		//return
 	}
 
 	var sentry SwaggerEntry
@@ -204,8 +204,8 @@ func swaggerFinish(path string, method string, entry *SwaggerMethodEntry) {
 
 func swaggerFinishByGroup(apiGroup string, path string, method string, entry *SwaggerMethodEntry) {
 	if err := binding.Validate(entry); err != nil {
-		panic(err)
-		return
+		//panic(err)
+		//return
 	}
 
 	var (
