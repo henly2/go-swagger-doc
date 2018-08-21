@@ -3,6 +3,7 @@ package swagger
 import (
 	"reflect"
 	"strings"
+	"fmt"
 )
 
 type JsonSchemaObj struct {
@@ -121,7 +122,11 @@ func (obj *JsonSchemaObj) readFromStruct(t reflect.Type) {
 
 		var tmp_obj = &JsonSchemaObj{}
 		obj.Properties[name] = tmp_obj
-		tmp_obj.read(field.Type, field.Tag.Get("doc"))
+		doc := field.Tag.Get("doc")
+		if doc == "" {
+			doc = fmt.Sprintf("{{.%s_%s}}", t.Name(), field.Name)
+		}
+		tmp_obj.read(field.Type, doc)
 
 		if !opts.Contains("omitempty") {
 			obj.Required = append(obj.Required, name)
