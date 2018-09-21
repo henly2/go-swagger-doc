@@ -101,7 +101,9 @@ func (obj *JsonSchemaObj) readFromMap(t reflect.Type) {
 
 func (obj *JsonSchemaObj) readFromStruct(t reflect.Type) {
 	obj.Type = "object"
-	obj.Properties = make(map[string]*JsonSchemaObj, 0)
+	if obj.Properties == nil {
+		obj.Properties = make(map[string]*JsonSchemaObj, 0)
+	}
 
 	count := t.NumField()
 	for i := 0; i < count; i++ {

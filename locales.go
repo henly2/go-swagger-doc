@@ -40,6 +40,9 @@ func loadLocale(lang string) error {
 }
 
 func TranslateText(text, lang string) string {
+	if bundle == nil {
+		return text
+	}
 	localizer := i18n.NewLocalizer(bundle, lang)
 
 	templateData, ok := langTemplateData[lang]
@@ -49,6 +52,10 @@ func TranslateText(text, lang string) string {
 		} else {
 			templateData = langTemplateData["en-us"]
 		}
+	}
+
+	if templateData == nil{
+		return text
 	}
 
 	return localizer.MustLocalize(&i18n.LocalizeConfig{

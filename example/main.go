@@ -13,9 +13,15 @@ type SayHelloParam struct {
 	Content  	string `json:"content" doc:"发送的内容"`
 }
 
+type HH struct {
+	AA string
+	BB int
+}
+
 type SayHelloResponse struct {
 	Err   	 int `json:"err" doc:"错误代码"`
 	Content  string `json:"content" doc:"内容"`
+	HH
 }
 
 func DocLoader(key string) ([]byte, error){
@@ -42,6 +48,18 @@ func main(){
 
 	router := engine.Group("/api", func(ctx *gin.Context) {
 
+	})
+	router.Use(func(ctx *gin.Context) {
+		origin := ctx.Request.Header.Get("origin")
+		ctx.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+		ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		ctx.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, XMLHttpRequest, "+
+			"Accept-Encoding, X-CSRF-Token, Authorization")
+		if ctx.Request.Method == "OPTIONS" {
+			ctx.String(200, "ok")
+			return
+		}
+		ctx.Next()
 	})
 
 	router.GET("/sayhi/:from", func(ctx *gin.Context) {
