@@ -14,7 +14,7 @@ var (
 	_routers map[string]*gin.RouterGroup
 )
 
-func InitDoc(localesDir, pacDir string)  {
+func InitDoc(localesDir, pacDir string, headers []swagger.SecurityDefinition)  {
 	swagger.SetLocalesDir(localesDir)
 
 	_routers = make(map[string]*gin.RouterGroup)
@@ -65,6 +65,7 @@ func InitDoc(localesDir, pacDir string)  {
 	config.Title = "{{.ApiDocTitle}}"
 	config.Description = "{{.ApiDocDescription}}"
 	config.DocVersion = "{{.ApiDocVersion}}"
+	config.Headers = headers
 	swagger.InitializeApiRoutes(_engine, &config, docLoader)
 }
 
