@@ -21,7 +21,8 @@ type HH struct {
 type SayHelloResponse struct {
 	Err   	 int `json:"err" doc:"错误代码"`
 	Content  string `json:"content" doc:"内容"`
-	HH
+	//HH
+	Children []*SayHelloResponse `json:"children"`
 }
 
 func DocLoader(key string) ([]byte, error){
@@ -74,19 +75,19 @@ func main(){
 		Summary:"打招呼",
 	})
 
-	router.POST("/sayhello", func(ctx *gin.Context) {
-		req := SayHelloParam{}
-		ctx.ShouldBindJSON(&req)
-
-		ctx.JSON(http.StatusOK, SayHelloResponse{Err:0, Content:fmt.Sprintf("get sayhello from %s with %s", req.From, req.Content)})
-	})
-	swagger.Swagger2(router,"/sayhello","post", &swagger.StructParam{
-		JsonData:&SayHelloParam{},
-		ResponseData:&SayHelloResponse{},
-		Description:"发送消息",
-		Tags:[]string{"发送消息"},
-		Summary:"发送消息",
-	})
+	//router.POST("/sayhello", func(ctx *gin.Context) {
+	//	req := SayHelloParam{}
+	//	ctx.ShouldBindJSON(&req)
+	//
+	//	ctx.JSON(http.StatusOK, SayHelloResponse{Err:0, Content:fmt.Sprintf("get sayhello from %s with %s", req.From, req.Content)})
+	//})
+	//swagger.Swagger2(router,"/sayhello","post", &swagger.StructParam{
+	//	JsonData:&SayHelloParam{},
+	//	ResponseData:&SayHelloResponse{},
+	//	Description:"发送消息",
+	//	Tags:[]string{"发送消息"},
+	//	Summary:"发送消息",
+	//})
 
 	engine.Run(":8044")
 }

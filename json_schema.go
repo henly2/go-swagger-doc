@@ -15,9 +15,43 @@ type JsonSchemaObj struct {
 	Schema      *JsonSchemaObj            `json:"schema,omitempty" yaml:"schema"`
 }
 
+//////////////////begin
+// FIXME:由于可以定义递归结构，所以防止无限循环，增加此方法
+type StructInfo struct {
+	Name string
+	Count int
+}
+var (
+	customerStruct map[string]*StructInfo
+)
+
+func beginParse() {
+	customerStruct = make(map[string]*StructInfo)
+}
+
+func existAndAddType(t reflect.Type) (string, bool) {
+	name := t.String()
+
+	v, ok := customerStruct[name]
+	if ok {
+		v.Count++
+		if v.Count > 1 {
+			return v.Name, true
+		}
+		return v.Name, false
+	}
+
+	customerStruct[name] = &StructInfo{Name:name}
+	return name, false
+}
+//////////////////end
+
 func (obj *JsonSchemaObj) ParseObject(variable interface{}) {
+	// 每次重置数据
+	beginParse()
+
 	value := reflect.ValueOf(variable)
-	obj.read(value.Type(), "")
+	obj.read(value.Type(), "", "")
 }
 
 var formatMapping = map[string][]string{
@@ -56,7 +90,7 @@ func getTypeFromMapping(t reflect.Type) (string, string, reflect.Kind) {
 	return "", "", t.Kind()
 }
 
-func (obj *JsonSchemaObj) read(t reflect.Type, doc string) {
+func (obj *JsonSchemaObj) read(t reflect.Type, name, doc string) {
 	jsType, _, kind := getTypeFromMapping(t)
 	if jsType != "" {
 		obj.Type = jsType
@@ -68,38 +102,50 @@ func (obj *JsonSchemaObj) read(t reflect.Type, doc string) {
 
 	switch kind {
 	case reflect.Slice:
-		obj.readFromSlice(t)
+		obj.readFromSlice(t, name)
 	case reflect.Map:
-		obj.readFromMap(t)
+		obj.readFromMap(t, name)
 	case reflect.Struct:
-		obj.readFromStruct(t)
+		_, exist := existAndAddType(t)
+		if exist {
+			// can return
+			obj.Type = "object"
+			obj.Description = doc + "{...}"
+			return
+		}
+		obj.readFromStruct(t, name)
 	case reflect.Ptr:
-		obj.read(t.Elem(), doc)
+		obj.read(t.Elem(), name, doc)
 	}
 }
 
-func (obj *JsonSchemaObj) readFromSlice(t reflect.Type) {
+func (obj *JsonSchemaObj) readFromSlice(t reflect.Type, name string) {
 	jsType, _, kind := getTypeFromMapping(t.Elem())
 	if kind == reflect.Uint8 {
 		obj.Type = "string"
 	} else if jsType != "" {
 		obj.Items = &JsonSchemaObj{Type: jsType}
-		obj.Items.read(t.Elem(), "")
+		obj.Items.read(t.Elem(), name, "")
+	} else if kind == reflect.Ptr {
+		// 支持jsType不是基本类型，并且元素是指针的类型
+		jsType = "object"
+		obj.Items = &JsonSchemaObj{Type: jsType}
+		obj.Items.read(t.Elem(), name,  "")
 	}
 }
 
-func (obj *JsonSchemaObj) readFromMap(t reflect.Type) {
+func (obj *JsonSchemaObj) readFromMap(t reflect.Type, name string) {
 	jsType, _, _ := getTypeFromMapping(t.Elem())
 
 	if jsType != "" {
 		obj.Properties = make(map[string]*JsonSchemaObj, 0)
 		var tmp_obj = &JsonSchemaObj{Type: jsType}
 		obj.Properties[".*"] = tmp_obj
-		tmp_obj.read(t.Elem(), "")
+		tmp_obj.read(t.Elem(), name,  "")
 	}
 }
 
-func (obj *JsonSchemaObj) readFromStruct(t reflect.Type) {
+func (obj *JsonSchemaObj) readFromStruct(t reflect.Type, name string) {
 	obj.Type = "object"
 	if obj.Properties == nil {
 		obj.Properties = make(map[string]*JsonSchemaObj, 0)
@@ -109,7 +155,7 @@ func (obj *JsonSchemaObj) readFromStruct(t reflect.Type) {
 	for i := 0; i < count; i++ {
 		field := t.Field(i)
 		if field.Anonymous {
-			obj.read(field.Type,"")
+			obj.read(field.Type, name, "")
 			continue
 		}
 
@@ -127,8 +173,9 @@ func (obj *JsonSchemaObj) readFromStruct(t reflect.Type) {
 		doc := field.Tag.Get("doc")
 		if doc == "" {
 			doc = fmt.Sprintf("{{.%s_%s}}", t.Name(), field.Name)
+			doc = ""
 		}
-		tmp_obj.read(field.Type, doc)
+		tmp_obj.read(field.Type, name, doc)
 
 		if !opts.Contains("omitempty") {
 			obj.Required = append(obj.Required, name)
