@@ -86,6 +86,19 @@ func AddDoc(router, path, method string, sp *swagger.StructParam) {
 	swagger.Swagger2(r,path,method, sp)
 }
 
+func AddSection(router, section, content string) {
+	var r *gin.RouterGroup
+	var ok bool
+
+	r, ok = _routers[router]
+	if !ok {
+		r = _engine.Group(router, func(ctx *gin.Context) {
+		})
+	}
+
+	swagger.SwaggerSection(r, "", section, content)
+}
+
 func docLoader(key string) ([]byte, error) {
 	fmt.Println("key:", key)
 	return []byte("what"), nil

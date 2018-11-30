@@ -239,6 +239,21 @@ func swaggerFinishByGroup(apiGroup string, path string, method string, entry *Sw
 	option.swaggerDataMap[apiGroup] = groupData
 }
 
+func SwaggerSection(group *gin.RouterGroup, apiGroup string, section string, content string) {
+	var (
+		option *options
+		exist bool
+	)
+
+	option, exist = gGroupOptions[apiGroup]
+	if !exist {
+		option = gDefaultOption
+	}
+
+	sectionContent := "\n\n\n" + section + "\n==========\n\n\n" + content
+	option.config.Description += sectionContent
+}
+
 //func GetFlags(baseUrl string) []cli.Flag {
 //	return []cli.Flag{
 //		cli.StringFlag{
