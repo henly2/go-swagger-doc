@@ -155,11 +155,11 @@ func AddGroupOption(groupName string, config *Config, docLoader DocLoader) {
 func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 	grouter.GET("/" + urlPrefix + "/spec/*group", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
-
-		lang := c.Request.FormValue("lang")
-		lang = strings.ToLower(lang)
+		lang := c.Query("lang")
+		fmt.Println("lang", "--", lang)
 		if lang == "" {
-			lang = "en-us"
+			lang = c.GetHeader("Accept-Language")
+			fmt.Println("Accept-Language", "--", lang)
 		}
 
 		apiGroupName := c.Param("group")
