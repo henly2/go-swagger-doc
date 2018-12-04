@@ -36,12 +36,13 @@ func InitDoc(localesDir, pacDir string, headers []swagger.SecurityDefinition)  {
 
 	_engine.GET("/documents/:file", func(ctx *gin.Context) {
 		file := ctx.Param("file")
-		lang := ctx.Request.FormValue("lang")
-		if lang == "" {
-			lang = "en-us"
-		}
 
-		fmt.Println(file, "--", lang)
+		lang := ctx.Query("lang")
+		fmt.Println("lang", "--", lang)
+		if lang == "" {
+			lang = ctx.GetHeader("Accept-Language")
+			fmt.Println("Accept-Language", "--", lang)
+		}
 
 		if strings.Index(file, ".html") != -1 {
 			scheme := "http://"

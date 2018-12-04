@@ -71,11 +71,13 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 	gDefaultOption = newOptions(config)
 	gDefaultOption.docLoader = docLoader
 
-	grouter.GET("/"+config.SwaggerUrlPrefix+"/spec/*group", func(c *gin.Context) {
+	grouter.GET("/"+config.SwaggerUrlPrefix+"/spec/:group", func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
-		lang := c.GetHeader("Accept-Language")
+		lang := c.Query("lang")
+		fmt.Println("lang", "--", lang)
 		if lang == "" {
-			lang = c.Param("lang")
+			lang = c.GetHeader("Accept-Language")
+			fmt.Println("Accept-Language", "--", lang)
 		}
 
 		apiGroupName := c.Param("group")
