@@ -173,7 +173,6 @@ func (obj *JsonSchemaObj) readFromStruct(t reflect.Type, name string) {
 		doc := field.Tag.Get("doc")
 		if doc == "" {
 			doc = fmt.Sprintf("{{.%s_%s}}", t.Name(), field.Name)
-			doc = ""
 		}
 		tmp_obj.read(field.Type, name, doc)
 
