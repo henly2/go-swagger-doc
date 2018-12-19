@@ -102,7 +102,7 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 			}
 		}
 
-		url := TranslateText(config.Url, lang)
+		url := config.Url
 		var (
 			scheme string
 			host string
@@ -217,7 +217,7 @@ func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 			}
 		}
 
-		url := TranslateText(option.config.Url, lang)
+		url := option.config.Url
 		var (
 			scheme string
 			host string
