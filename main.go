@@ -102,6 +102,7 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 			}
 		}
 
+		url := TranslateText(config.Url, lang)
 		var (
 			scheme string
 			host string
@@ -110,15 +111,15 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 			httpPrefix = "http://"
 			httpsPrefix = "https://"
 		)
-		if strings.HasPrefix(config.Url, httpPrefix) {
+		if strings.HasPrefix(url, httpPrefix) {
 			scheme = "http"
-			host = config.Url[len(httpPrefix):]
-		} else if strings.HasPrefix(config.Url, httpsPrefix) {
+			host = url[len(httpPrefix):]
+		} else if strings.HasPrefix(url, httpsPrefix) {
 			scheme = "https"
-			host = config.Url[len(httpsPrefix):]
+			host = url[len(httpsPrefix):]
 		} else {
 			scheme = "http"
-			host = config.Url
+			host = url
 		}
 
 		response := gin.H{
@@ -216,6 +217,7 @@ func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 			}
 		}
 
+		url := TranslateText(option.config.Url, lang)
 		var (
 			scheme string
 			host string
@@ -224,15 +226,15 @@ func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 			httpPrefix = "http://"
 			httpsPrefix = "https://"
 		)
-		if strings.HasPrefix(option.config.Url, httpPrefix) {
+		if strings.HasPrefix(url, httpPrefix) {
 			scheme = "http"
-			host = option.config.Url[len(httpPrefix):]
-		} else if strings.HasPrefix(option.config.Url, httpsPrefix) {
+			host = url[len(httpPrefix):]
+		} else if strings.HasPrefix(url, httpsPrefix) {
 			scheme = "https"
-			host = option.config.Url[len(httpsPrefix):]
+			host = url[len(httpsPrefix):]
 		} else {
 			scheme = "http"
-			host = option.config.Url
+			host = url
 		}
 
 		response := gin.H{
