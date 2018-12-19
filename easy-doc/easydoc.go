@@ -62,6 +62,7 @@ func InitDoc(localesDir, pacDir string, headers []swagger.SecurityDefinition)  {
 	_engine.Use()
 
 	config := swagger.Config{}
+	config.Url = "{{.ApiUrl}}"
 	config.BasePath = "/"
 	config.Title = "{{.ApiDocTitle}}"
 	config.Description = "{{.ApiDocDescription}}"

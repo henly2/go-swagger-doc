@@ -10,6 +10,9 @@ import (
 )
 
 type Config struct {
+	// api url，内部自动判断http，https
+	Url string
+
 	// "api前缀，例如/api/v1"，默认为空
 	BasePath string
 
@@ -99,8 +102,28 @@ func InitializeApiRoutes(grouter *gin.Engine, config *Config, docLoader DocLoade
 			}
 		}
 
+		var (
+			scheme string
+			host string
+		)
+		const (
+			httpPrefix = "http://"
+			httpsPrefix = "https://"
+		)
+		if strings.HasPrefix(config.Url, httpPrefix) {
+			scheme = "http"
+			host = config.Url[len(httpPrefix):]
+		} else if strings.HasPrefix(config.Url, httpsPrefix) {
+			scheme = "https"
+			host = config.Url[len(httpsPrefix):]
+		} else {
+			scheme = "http"
+			host = config.Url
+		}
+
 		response := gin.H{
-			"host": c.Request.Host,
+			"schemes":[]string{scheme},
+			"host": host,
 			"basePath": config.BasePath,
 			"swagger":  swaggerVersion,
 			"info": struct {
@@ -193,8 +216,28 @@ func InitializeApiRoutesByGroup(grouter *gin.Engine, urlPrefix string) {
 			}
 		}
 
+		var (
+			scheme string
+			host string
+		)
+		const (
+			httpPrefix = "http://"
+			httpsPrefix = "https://"
+		)
+		if strings.HasPrefix(option.config.Url, httpPrefix) {
+			scheme = "http"
+			host = option.config.Url[len(httpPrefix):]
+		} else if strings.HasPrefix(option.config.Url, httpsPrefix) {
+			scheme = "https"
+			host = option.config.Url[len(httpsPrefix):]
+		} else {
+			scheme = "http"
+			host = option.config.Url
+		}
+
 		response := gin.H{
-			"host": c.Request.Host,
+			"schemes":[]string{scheme},
+			"host": host,
 			"basePath": option.config.BasePath,
 			"swagger":  swaggerVersion,
 			"info": struct {
