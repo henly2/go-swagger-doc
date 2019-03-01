@@ -5,6 +5,7 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 	"fmt"
+	"strings"
 )
 
 var (
@@ -24,6 +25,7 @@ func SetLocalesDir(dir string)  {
 }
 
 func loadLocale(lang string) error {
+	lang = strings.ToLower(lang)
 	messageFile, err := bundle.LoadMessageFile(localesDir + "/" + lang + ".toml")
 	if err != nil {
 		fmt.Println(err)
@@ -43,6 +45,7 @@ func TranslateText(text, lang string) string {
 	if bundle == nil {
 		return text
 	}
+	lang = strings.ToLower(lang)
 	localizer := i18n.NewLocalizer(bundle, lang)
 
 	templateData, ok := langTemplateData[lang]
