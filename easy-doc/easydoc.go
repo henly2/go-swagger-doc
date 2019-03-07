@@ -71,6 +71,10 @@ func InitDoc(localesDir, pacDir string, config swagger.Config)  {
 	swagger.InitializeApiRoutes(_engine, &config, docLoader)
 }
 
+func GetEngine() *gin.Engine {
+	return _engine
+}
+
 func RunDoc(port string)  {
 	_engine.Run(":" + port)
 }
