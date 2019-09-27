@@ -20,7 +20,7 @@ func InitDoc(localesDir, pacDir string, config swagger.Config)  {
 	_routers = make(map[string]*gin.RouterGroup)
 
 	_engine = gin.Default()
-	/*_engine.Use(cors.New(cors.Config{
+	_engine.Use(cors.New(cors.Config{
 		AllowAllOrigins: true,
 		AllowMethods:    []string{"POST", "GET", "OPTIONS", "PUT", "DELETE"},
 		AllowHeaders:    []string{"Authorization", "X-Requested-With", "X_Requested_With", "Content-Type", "Access-Token", "Accept-Language"},
@@ -30,8 +30,7 @@ func InitDoc(localesDir, pacDir string, config swagger.Config)  {
 		//	return true;//origin == "https://github.com"
 		//},
 		//MaxAge: 12 * time.Hour,
-	}))*/
-        _engine.Use(cors.Default())
+	}))
 
 	_engine.LoadHTMLGlob(pacDir + "/*.html")
 
