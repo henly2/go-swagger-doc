@@ -1,9 +1,9 @@
 package swagger
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
-	"fmt"
 )
 
 type JsonSchemaObj struct {
@@ -18,9 +18,10 @@ type JsonSchemaObj struct {
 //////////////////begin
 // FIXME:由于可以定义递归结构，所以防止无限循环，增加此方法
 type StructInfo struct {
-	Name string
+	Name  string
 	Count int
 }
+
 var (
 	customerStruct map[string]*StructInfo
 )
@@ -41,9 +42,10 @@ func existAndAddType(t reflect.Type) (string, bool) {
 		return v.Name, false
 	}
 
-	customerStruct[name] = &StructInfo{Name:name}
+	customerStruct[name] = &StructInfo{Name: name}
 	return name, false
 }
+
 //////////////////end
 
 func (obj *JsonSchemaObj) ParseObject(variable interface{}) {
@@ -95,6 +97,9 @@ func (obj *JsonSchemaObj) read(t reflect.Type, name, doc string) {
 	if jsType != "" {
 		obj.Type = jsType
 	}
+	if doc == "" {
+		doc = fmt.Sprintf("{{.%s}}", name)
+	}
 	obj.Description = doc
 	//if format != "" {
 	//	obj.Format = format
@@ -130,7 +135,7 @@ func (obj *JsonSchemaObj) readFromSlice(t reflect.Type, name string) {
 		// 支持jsType不是基本类型，并且元素是指针的类型
 		jsType = "object"
 		obj.Items = &JsonSchemaObj{Type: jsType}
-		obj.Items.read(t.Elem(), name,  "")
+		obj.Items.read(t.Elem(), name, "")
 	}
 }
 
@@ -141,7 +146,7 @@ func (obj *JsonSchemaObj) readFromMap(t reflect.Type, name string) {
 		obj.Properties = make(map[string]*JsonSchemaObj, 0)
 		var tmp_obj = &JsonSchemaObj{Type: jsType}
 		obj.Properties[".*"] = tmp_obj
-		tmp_obj.read(t.Elem(), name,  "")
+		tmp_obj.read(t.Elem(), name, "")
 	}
 }
 
@@ -190,6 +195,7 @@ func parseTag(tag string) (string, tagOptions) {
 }
 
 type tagOptions string
+
 func (o tagOptions) Contains(optionName string) bool {
 	if len(o) == 0 {
 		return false
